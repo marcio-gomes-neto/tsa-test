@@ -2,14 +2,15 @@
     <div class="content">
 
       <div class="main-content">
-        <div class="dropdown">
-          <button class="drop-btn"> Select User
+        <div class="dropdown" @mouseover="dropdownActive = true" @mouseleave="dropdownActive = false">
+          <button class="drop-btn">
+            {{selectedUser ? selectedUser : 'Select User' }}
             <i class="fa fa-lg fa-caret-down"></i>
           </button>
-          <div class="dropdown-content">
-            <li href="#">Link 1</li>
-            <li href="#">Link 2</li>
-            <li href="#">Link 3</li>
+          <div class="dropdown-content" :style="{display: dropdownActive ? 'block' : 'none'}">
+            <li v-for="user in users" :key="user.id" @click="getUser"> 
+              {{user.id === 0 ? 'Failed to load users!' : 'User ' + user.id}}
+            </li>
           </div>
         </div>
 
@@ -17,27 +18,27 @@
             <div class="grid-container">
                 <div class="grid-item">
                     <label>Name</label>
-                    <input readonly/>
+                    <input v-model="name" readonly/>
                 </div>
                 <div class="grid-item">
                     <label>Username</label>
-                    <input readonly/>
+                    <input v-model="username" readonly/>
                 </div>
                 <div class="grid-item">
                     <label>Email</label>
-                    <input readonly/>
+                    <input v-model="email" readonly/>
                 </div>
                 <div class="grid-item">
                     <label>Phone</label>
-                    <input readonly/>
+                    <input v-model="phone" readonly/>
                 </div>
                 <div class="grid-item">
                     <label>Street</label>
-                    <input readonly/>
+                    <input v-model="street" readonly/>
                 </div>
                 <div class="grid-item">
                     <label>City</label>
-                    <input value="asdasdas" readonly/>
+                    <input v-model="city" readonly/>
                 </div>
               </div>
         </div>
@@ -46,12 +47,49 @@
   </template>
   
   <script>
+  import axios from 'axios';
+
   export default {
     name: 'Users-page',
-    components: {
+    data(){
+      return {
+        dropdownActive: false,
+        selectedUser:false,
+
+        users: undefined,
+
+        name: undefined,
+        username: undefined,
+        email: undefined,
+        phone: undefined,
+        street: undefined,
+        city: undefined
+      }
+    },
+    async mounted() {
+    const getUsersResponse = await axios.get('https://jsonplaceholder.typicode.com/users');
+      if(getUsersResponse.status === 200){
+        this.users = getUsersResponse.data;
+      } else {
+        this.users = [{id:0}];
+      }
+    },
+    methods:{
+      async getUser(event){
+        this.selectedUser = event.target.innerText;
+        this.dropdownActive = false;
+
+        const getUser = await axios.get(`https://jsonplaceholder.typicode.com/users/${event.target.innerText.slice(5)}`);
+        this.name = getUser.data.name
+        this.username = getUser.data.username
+        this.phone = getUser.data.phone
+        this.email = getUser.data.email
+        this.street = getUser.data.address.street
+        this.city = getUser.data.address.city
+      },
     }
   }
-  </script>
+</script>
   
   <style scoped>
   .main-content {
@@ -101,6 +139,7 @@
     font-family: inherit;
   }
   .drop-btn {
+    width: 250px;
     background-color: var(--main-light);
     color: white;
     padding: 12px 80px;
@@ -122,7 +161,6 @@
   }
   
   .dropdown-content {
-    display: none;
     left: 22px;
     position: absolute;
     background-color: white;
@@ -139,9 +177,6 @@
     text-decoration: none;
     border-bottom: 1px solid grey;
     cursor: pointer;
-    display: block;
-  }
-  .dropdown:hover .dropdown-content {
     display: block;
   }
   .dropdown-content li:last-child:hover {
